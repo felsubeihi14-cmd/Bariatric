@@ -1,0 +1,386 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Bariatric Medication Word Quest</title>
+  <style>
+    :root {
+      --ink: #123c46;
+      --muted: #587078;
+      --paper: #f7fbfb;
+      --panel: #ffffff;
+      --teal: #0d6972;
+      --teal-dark: #084a52;
+      --aqua: #dff3f1;
+      --coral: #ef6a55;
+      --green: #27875d;
+      --green-soft: #dff4e9;
+      --amber: #9a6812;
+      --amber-soft: #fff2cf;
+      --line: #c7dadd;
+      --shadow: 0 16px 40px rgba(15, 70, 79, .13);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 10% 10%, rgba(49, 174, 163, .14), transparent 28rem),
+        radial-gradient(circle at 90% 95%, rgba(239, 106, 85, .12), transparent 25rem),
+        var(--paper);
+    }
+    button { font: inherit; }
+    .shell {
+      width: min(620px, 100%);
+      margin: 0 auto;
+      padding: max(14px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(22px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+    }
+    .brand-bar {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 64px;
+      margin-bottom: 10px;
+      padding: 9px 16px;
+      background: white;
+      border: 1px solid #dce9eb;
+      border-radius: 18px;
+      box-shadow: 0 8px 22px rgba(15, 70, 79, .09);
+    }
+    .brand-logo { display: block; width: min(180px, 48vw); max-height: 48px; object-fit: contain; }
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 18px;
+      color: white;
+      background: linear-gradient(135deg, var(--teal-dark), var(--teal));
+      border-radius: 22px;
+      box-shadow: var(--shadow);
+    }
+    h1 { margin: 0; font-size: clamp(1.35rem, 6vw, 1.9rem); line-height: 1.12; }
+    .subtitle { margin: 8px 0 0; color: #d9f3f0; font-size: .96rem; }
+    .score-box { min-width: 112px; text-align: center; }
+    .score { display: block; font-size: 2rem; font-weight: 800; }
+    .score-label { font-size: .78rem; letter-spacing: .1em; text-transform: uppercase; }
+    .progress-track { height: 9px; margin: 18px 4px 0; overflow: hidden; background: #dcebec; border-radius: 999px; }
+    .progress-fill { width: 0; height: 100%; background: linear-gradient(90deg, #37a99c, #ef8c62); transition: width .3s ease; }
+    .instructions {
+      display: grid;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin: 16px 2px;
+      color: var(--muted);
+      font-size: .94rem;
+    }
+    .game-layout { display: grid; grid-template-columns: 1fr; gap: 14px; align-items: start; }
+    .card { background: var(--panel); border: 1px solid #dce9eb; border-radius: 20px; box-shadow: var(--shadow); }
+    .grid-card { padding: 18px; }
+    .word-grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      width: 100%;
+      aspect-ratio: 1;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #eef7f6;
+      touch-action: manipulation;
+    }
+    .cell {
+      display: grid;
+      place-items: center;
+      min-width: 0;
+      padding: 0;
+      color: var(--ink);
+      background: transparent;
+      border: 0;
+      border-right: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+      font-size: clamp(.78rem, 3.7vw, 1.08rem);
+      font-weight: 750;
+      cursor: pointer;
+      transition: background .15s ease, color .15s ease, transform .12s ease;
+    }
+    .cell:hover, .cell:focus-visible { background: #d5eeeb; outline: 3px solid rgba(239, 106, 85, .48); outline-offset: -3px; z-index: 1; }
+    .cell.selected { color: white; background: var(--coral); transform: scale(.92); border-radius: 6px; }
+    .cell.found { color: #0d5138; background: #bde8d0; }
+    .clue-card { padding: 20px; }
+    .clue-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+    h2 { margin: 0; font-size: 1.15rem; }
+    .clue-list { display: grid; gap: 9px; margin: 0; padding: 0; list-style: none; }
+    .clue {
+      display: grid;
+      grid-template-columns: 30px 1fr 25px;
+      gap: 9px;
+      align-items: start;
+      padding: 10px 11px;
+      border-radius: 12px;
+      background: #f1f7f7;
+      transition: background .2s ease, opacity .2s ease;
+    }
+    .clue-num { color: var(--coral); font-weight: 800; }
+    .clue-text { font-size: .89rem; line-height: 1.35; }
+    .check { opacity: 0; color: var(--green); font-weight: 900; transition: opacity .2s ease; }
+    .clue.done { background: var(--green-soft); }
+    .clue.done .clue-text { text-decoration: line-through; text-decoration-thickness: 2px; }
+    .clue.done .check { opacity: 1; }
+    .status {
+      min-height: 48px;
+      margin-top: 12px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      color: var(--muted);
+      background: #edf5f5;
+      font-size: .92rem;
+      line-height: 1.35;
+    }
+    .status.good { color: #145b3e; background: var(--green-soft); }
+    .status.try { color: #6f4b08; background: var(--amber-soft); }
+    .actions {
+      position: sticky;
+      bottom: max(8px, env(safe-area-inset-bottom));
+      z-index: 5;
+      display: flex;
+      gap: 10px;
+      margin-top: 13px;
+      padding: 8px;
+      background: rgba(255, 255, 255, .94);
+      border-radius: 14px;
+      box-shadow: 0 8px 22px rgba(15, 70, 79, .12);
+      backdrop-filter: blur(10px);
+    }
+    .action {
+      flex: 1;
+      min-height: 48px;
+      padding: 10px 16px;
+      border: 0;
+      border-radius: 11px;
+      font-weight: 750;
+      cursor: pointer;
+    }
+    .primary { color: white; background: var(--teal); }
+    .secondary { color: var(--ink); background: var(--aqua); }
+    .action:hover { filter: brightness(.96); }
+    .completion {
+      display: none;
+      margin-top: 14px;
+      padding: 20px;
+      text-align: center;
+      color: #104a35;
+      background: var(--green-soft);
+      border-radius: 16px;
+    }
+    .completion.show { display: block; animation: pop .35s ease-out; }
+    .completion strong { display: block; margin-bottom: 4px; font-size: 1.25rem; }
+    .safety { margin: 18px 4px 0; color: var(--muted); font-size: .78rem; text-align: center; }
+    @keyframes pop { from { opacity: 0; transform: translateY(8px) scale(.98); } to { opacity: 1; transform: none; } }
+    @media (max-width: 860px) {
+      header { padding: 19px; border-radius: 18px; }
+      .grid-card { padding: 10px; }
+      .clue-card { padding: 16px; }
+    }
+    @media (max-width: 430px) {
+      .score-box { min-width: 76px; }
+      .score { font-size: 1.55rem; }
+      .subtitle { font-size: .84rem; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; animation: none !important; transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <a class="brand-bar" href="https://www.seha.ae/" target="_blank" rel="noopener" aria-label="Visit the official SEHA Abu Dhabi website">
+      <img class="brand-logo" src="https://media.uaelogos.ae/4116/conversions/SEHA-thumb.png" alt="SEHA Abu Dhabi">
+    </a>
+    <header>
+      <div>
+        <h1>Bariatric Medication Word Quest</h1>
+        <p class="subtitle">Solve each clue and find its answer in the grid.</p>
+      </div>
+      <div class="score-box" aria-live="polite">
+        <span class="score"><span id="score">0</span>/10</span>
+        <span class="score-label">found</span>
+      </div>
+    </header>
+
+    <div class="progress-track" aria-hidden="true"><div class="progress-fill" id="progress"></div></div>
+    <div class="instructions">
+      <span><strong>How to play:</strong> choose the first letter, then the last letter. Words can run in any straight direction.</span>
+      <span>GLP-1 appears as <strong>GLPONE</strong>.</span>
+    </div>
+
+    <section class="game-layout">
+      <div class="card grid-card">
+        <div id="grid" class="word-grid" role="grid" aria-label="12 by 12 medication word search"></div>
+      </div>
+
+      <aside class="card clue-card">
+        <div class="clue-heading">
+          <h2>Clues</h2>
+          <span id="remaining">10 remaining</span>
+        </div>
+        <ol class="clue-list" id="clues"></ol>
+        <div class="status" id="status" role="status" aria-live="polite">Choose the first letter of a word to begin.</div>
+        <div class="actions">
+          <button class="action secondary" id="clear" type="button">Clear selection</button>
+          <button class="action primary" id="restart" type="button">Restart game</button>
+        </div>
+        <div class="completion" id="completion" aria-live="polite">
+          <strong>Quest complete!</strong>
+          You found all 10 bariatric medication words.
+        </div>
+      </aside>
+    </section>
+    <p class="safety">Educational activity only. Do not stop or change a medicine without advice from your healthcare team.</p>
+  </main>
+
+  <script>
+    const rows = [
+      "HDAHAZLJAVZA", "VQEKYLDPNUNE", "YLSGHAFXONDD",
+      "OVULEIGLIIBI", "RIAPPETITETT", "LTNONVBAATUU",
+      "IAQNBQPIROFL", "SMKEWEXTDRQG", "TISDZHJBYPVA",
+      "ANORBZCYHTGM", "TSICAMRAHPEE", "ZTITRCAQPTZS"
+    ];
+
+    const words = [
+      { answer: "GLPONE", display: "GLP-1", clue: "A group of medicines that can help reduce appetite." },
+      { answer: "SEMAGLUTIDE", clue: "A weekly GLP-1 medicine beginning with the letter S." },
+      { answer: "TIRZEPATIDE", clue: "A weekly medicine that works on both GIP and GLP-1." },
+      { answer: "APPETITE", clue: "The feeling that makes you want to eat." },
+      { answer: "ORLISTAT", clue: "I am a medicine that reduces how much dietary fat the body absorbs. What am I?" },
+      { answer: "NAUSEA", clue: "A sick or unsettled feeling in the stomach." },
+      { answer: "HYDRATION", clue: "Getting enough water and other fluids." },
+      { answer: "PHARMACIST", clue: "The healthcare professional who is a medicines expert." },
+      { answer: "VITAMINS", clue: "Nutrients often needed long term after bariatric surgery." },
+      { answer: "PROTEIN", clue: "A nutrient that supports muscles and healing." }
+    ];
+
+    const gridEl = document.getElementById("grid");
+    const cluesEl = document.getElementById("clues");
+    const statusEl = document.getElementById("status");
+    const scoreEl = document.getElementById("score");
+    const remainingEl = document.getElementById("remaining");
+    const progressEl = document.getElementById("progress");
+    const completionEl = document.getElementById("completion");
+    let start = null;
+    let found = new Set();
+
+    function makeCell(r, c, letter) {
+      const cell = document.createElement("button");
+      cell.type = "button";
+      cell.className = "cell";
+      cell.textContent = letter;
+      cell.dataset.row = r;
+      cell.dataset.col = c;
+      cell.setAttribute("role", "gridcell");
+      cell.setAttribute("aria-label", `Row ${r + 1}, column ${c + 1}, letter ${letter}`);
+      cell.addEventListener("click", () => chooseCell(r, c));
+      return cell;
+    }
+
+    function render() {
+      gridEl.innerHTML = "";
+      rows.forEach((row, r) => [...row].forEach((letter, c) => gridEl.appendChild(makeCell(r, c, letter))));
+      cluesEl.innerHTML = "";
+      words.forEach((item, i) => {
+        const li = document.createElement("li");
+        li.className = "clue";
+        li.dataset.answer = item.answer;
+        li.innerHTML = `<span class="clue-num">${i + 1}.</span><span class="clue-text">${item.clue}</span><span class="check" aria-hidden="true">✓</span>`;
+        cluesEl.appendChild(li);
+      });
+      updateScore();
+    }
+
+    function cellAt(r, c) {
+      return gridEl.querySelector(`[data-row="${r}"][data-col="${c}"]`);
+    }
+
+    function chooseCell(r, c) {
+      if (!start) {
+        start = { r, c };
+        cellAt(r, c).classList.add("selected");
+        setStatus("Now choose the last letter of the word.", "");
+        return;
+      }
+
+      const end = { r, c };
+      const path = lineBetween(start, end);
+      clearSelection();
+      if (!path) {
+        setStatus("Choose letters in a straight horizontal, vertical or diagonal line.", "try");
+        return;
+      }
+
+      const attempt = path.map(p => rows[p.r][p.c]).join("");
+      const reversed = [...attempt].reverse().join("");
+      const match = words.find(w => !found.has(w.answer) && (w.answer === attempt || w.answer === reversed));
+      if (!match) {
+        setStatus(`“${attempt}” is not one of the remaining answers. Try again.`, "try");
+        return;
+      }
+
+      found.add(match.answer);
+      path.forEach(p => cellAt(p.r, p.c).classList.add("found"));
+      const clue = cluesEl.querySelector(`[data-answer="${match.answer}"]`);
+      clue.classList.add("done");
+      clue.setAttribute("aria-label", `${match.display || match.answer}, found`);
+      setStatus(`Correct — you found ${match.display || match.answer}!`, "good");
+      updateScore();
+    }
+
+    function lineBetween(a, b) {
+      const dr = b.r - a.r;
+      const dc = b.c - a.c;
+      if (dr === 0 && dc === 0) return [{ r: a.r, c: a.c }];
+      if (!(dr === 0 || dc === 0 || Math.abs(dr) === Math.abs(dc))) return null;
+      const stepR = Math.sign(dr);
+      const stepC = Math.sign(dc);
+      const count = Math.max(Math.abs(dr), Math.abs(dc));
+      return Array.from({ length: count + 1 }, (_, i) => ({ r: a.r + stepR * i, c: a.c + stepC * i }));
+    }
+
+    function clearSelection() {
+      gridEl.querySelectorAll(".selected").forEach(el => el.classList.remove("selected"));
+      start = null;
+    }
+
+    function setStatus(message, type) {
+      statusEl.textContent = message;
+      statusEl.className = `status${type ? ` ${type}` : ""}`;
+    }
+
+    function updateScore() {
+      const count = found.size;
+      scoreEl.textContent = count;
+      remainingEl.textContent = count === 10 ? "Complete" : `${10 - count} remaining`;
+      progressEl.style.width = `${count * 10}%`;
+      completionEl.classList.toggle("show", count === 10);
+      if (count === 10) setStatus("Excellent work — every clue is complete.", "good");
+    }
+
+    function restart() {
+      start = null;
+      found = new Set();
+      render();
+      setStatus("Choose the first letter of a word to begin.", "");
+      completionEl.classList.remove("show");
+    }
+
+    document.getElementById("clear").addEventListener("click", () => {
+      clearSelection();
+      setStatus("Selection cleared. Choose a new first letter.", "");
+    });
+    document.getElementById("restart").addEventListener("click", restart);
+    render();
+  </script>
+</body>
+</html>
